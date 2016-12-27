@@ -864,23 +864,28 @@ func (d *cephRBDVolumeDriver) sh_createRBDImage(pool string, name string, size i
 		pool, "create",
 		"--image-format", strconv.Itoa(2),
 		"--size", strconv.Itoa(size),
+                "--image-features", strconv.Itoa(3),
 		name,
 	)
 	if err != nil {
 		return err
 	}
 
+
 	// lock it temporarily for fs creation
+	/* FIXME: image locking not available in current kernel driver
 	lockname, err := d.lockImage(pool, name)
 	if err != nil {
 		// TODO: defer image delete?
 		return err
 	}
+	*/
 
 	// map to kernel device
 	device, err := d.mapImage(pool, name)
 	if err != nil {
-		defer d.unlockImage(pool, name, lockname)
+		//FIXME: image locking not available in current kernel driver
+		//defer d.unlockImage(pool, name, lockname)
 		return err
 	}
 
@@ -888,7 +893,8 @@ func (d *cephRBDVolumeDriver) sh_createRBDImage(pool string, name string, size i
 	_, err = shWithTimeout(5*time.Minute, mkfs, device)
 	if err != nil {
 		defer d.unmapImageDevice(device)
-		defer d.unlockImage(pool, name, lockname)
+		//FIXME: image locking not available in current kernel driver
+		//defer d.unlockImage(pool, name, lockname)
 		return err
 	}
 
@@ -902,10 +908,12 @@ func (d *cephRBDVolumeDriver) sh_createRBDImage(pool string, name string, size i
 	}
 
 	// unlock
+	/* FIXME: image locking not available in current kernel driver
 	err = d.unlockImage(pool, name, lockname)
 	if err != nil {
 		return err
 	}
+	*/
 
 	return nil
 }
